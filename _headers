@@ -1,0 +1,9 @@
+# Universal static hosting headers
+# Supported by: Cloudflare Pages, Netlify, and any host that reads _headers
+# For GitHub Pages: headers are not enforced but file is harmless
+
+/js/*
+  Cache-Control: public, max-age=86400
+
+/css/*
+  Cache-Control: public, max-age=86400

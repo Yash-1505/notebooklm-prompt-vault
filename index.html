@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="glass">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VaultLM — NotebookLM Prompt Vault</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand">Vault<span>LM</span></div>
+  <div class="nav-links">
+    <a href="index.html" data-page="index.html">Home</a>
+    <a href="media.html" data-page="media.html">Media</a>
+    <a href="documents.html" data-page="documents.html">Documents</a>
+    <a href="practice.html" data-page="practice.html">Practice</a>
+    <a href="visuals.html" data-page="visuals.html">Visuals</a>
+    <a href="subjects.html" data-page="subjects.html">Subjects</a>
+    <a href="community.html" data-page="community.html">Community</a>
+  </div>
+  <div class="nav-actions">
+    <button class="btn-icon" id="settings-btn" title="Settings">⚙</button>
+    <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+  </div>
+</nav>
+
+<div class="drawer-overlay" id="drawer-overlay"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-head">Vault<span>LM</span></div>
+  <nav class="drawer-nav">
+    <div class="drawer-section">Main</div>
+    <a href="index.html" data-page="index.html"><span class="nav-icon">🏠</span>Home</a>
+    <div class="drawer-section">Prompts</div>
+    <a href="media.html" data-page="media.html"><span class="nav-icon">🎙</span>Media</a>
+    <a href="documents.html" data-page="documents.html"><span class="nav-icon">📄</span>Documents</a>
+    <a href="practice.html" data-page="practice.html"><span class="nav-icon">🃏</span>Practice</a>
+    <a href="visuals.html" data-page="visuals.html"><span class="nav-icon">📊</span>Visuals</a>
+    <div class="drawer-section">Resources</div>
+    <a href="subjects.html" data-page="subjects.html"><span class="nav-icon">📚</span>Subjects</a>
+    <a href="community.html" data-page="community.html"><span class="nav-icon">🌐</span>Community</a>
+  </nav>
+</div>
+
+<div class="hero">
+  <div class="main" style="padding-top:0;padding-bottom:0">
+    <div class="hero-title">NotebookLM<br><span class="accent">Prompt Vault</span></div>
+    <div class="hero-sub">51 field-tested prompts for every NotebookLM Studio tool. Built for PIET Parul University students with your full syllabus baked in.</div>
+    <div class="hero-badges">
+      <span class="h-badge">✦ 33 Core Prompts</span>
+      <span class="h-badge">✦ 18 Community Prompts</span>
+      <span class="h-badge">✦ 5 Semesters · 46 Subjects</span>
+      <span class="h-badge">✦ 4 Themes</span>
+      <span class="h-badge">✦ AI Auto-Context</span>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- CONTEXT BAR -->
+  <div class="ctx-bar">
+    <div class="ctx-bar-head">
+      <span class="ctx-label">📍 Set Context — auto-fills all prompts</span>
+      <button class="btn btn-primary" id="ctx-apply">Apply</button>
+    </div>
+    <div class="ctx-inputs">
+      <input class="ctx-input" data-ctx="subject" placeholder="Subject (e.g. Python & Full Stack)">
+      <input class="ctx-input" data-ctx="unit" placeholder="Unit (e.g. Unit 4 — Flask)">
+      <input class="ctx-input" data-ctx="topic" placeholder="Topic (e.g. REST APIs)">
+    </div>
+    <div class="ctx-ai-row">
+      <input class="ctx-ai-input" id="ctx-ai-input" placeholder="Or paste any text / subject name — AI extracts context automatically">
+      <button class="btn btn-primary" id="ctx-ai">✦ AI</button>
+    </div>
+  </div>
+
+  <!-- STAT BAR -->
+  <div class="stat-bar">
+    <div class="stat-item"><span class="stat-num">51</span> Total Prompts</div>
+    <div class="stat-item"><span class="stat-num">8</span> Studio Tools</div>
+    <div class="stat-item"><span class="stat-num">46</span> Subjects Indexed</div>
+    <div class="stat-item"><span class="stat-num">200+</span> Units Extracted</div>
+    <div class="stat-item"><span class="stat-num">5</span> Sem/Branch Combos</div>
+  </div>
+
+  <!-- GROUP CARDS -->
+  <div class="page-head">
+    <div class="page-title">Explore Prompts</div>
+    <div class="page-sub">Select a category or use the navigation above</div>
+  </div>
+
+  <div class="group-grid">
+    <a class="group-card" href="media.html">
+      <div class="group-icon">🎙</div>
+      <div class="group-name">Media</div>
+      <div class="group-desc">Audio Overview · Slide Deck · Video Overview</div>
+      <span class="group-count">9 prompts</span>
+    </a>
+    <a class="group-card" href="documents.html">
+      <div class="group-icon">📄</div>
+      <div class="group-name">Documents</div>
+      <div class="group-desc">Reports — all 8 formats including AI-suggested</div>
+      <span class="group-count">8 prompts</span>
+    </a>
+    <a class="group-card" href="practice.html">
+      <div class="group-icon">🃏</div>
+      <div class="group-name">Practice</div>
+      <div class="group-desc">Flashcards & Quiz — 3 difficulty modes each</div>
+      <span class="group-count">6 prompts</span>
+    </a>
+    <a class="group-card" href="visuals.html">
+      <div class="group-icon">📊</div>
+      <div class="group-name">Visuals</div>
+      <div class="group-desc">Infographic (5 types) · Data Table (5 types)</div>
+      <span class="group-count">10 prompts</span>
+    </a>
+    <a class="group-card" href="subjects.html">
+      <div class="group-icon">📚</div>
+      <div class="group-name">Subjects</div>
+      <div class="group-desc">Sem 2, 4, 6 · AI&DS · AIML · Full syllabus</div>
+      <span class="group-count">46 subjects</span>
+    </a>
+    <a class="group-card" href="community.html">
+      <div class="group-icon">🌐</div>
+      <div class="group-name">Community</div>
+      <div class="group-desc">Field-tested prompts from 3 GitHub repositories</div>
+      <span class="group-count">18 prompts</span>
+    </a>
+    <a class="group-card" href="#" onclick="document.getElementById('settings-btn').click();return false;">
+      <div class="group-icon">⚙</div>
+      <div class="group-name">Settings</div>
+      <div class="group-desc">AI keys · Themes · Export options</div>
+      <span class="group-count">Free AI setup</span>
+    </a>
+  </div>
+
+
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settings-overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">⚙ Settings</div>
+      <button class="btn-icon" id="settings-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label>Theme</label>
+        <div class="theme-grid">
+          <button class="theme-btn" data-theme="glass">◈ Glass</button>
+          <button class="theme-btn" data-theme="editorial">◻ Editorial</button>
+          <button class="theme-btn" data-theme="terminal">▸ Terminal</button>
+          <button class="theme-btn" data-theme="blocks">◼ Blocks</button>
+        </div>
+      </div>
+      <div class="field"><label>AI Provider</label>
+        <div class="provider-tabs">
+          <button class="p-tab active" data-provider="groq">Groq (Recommended)</button>
+          <button class="p-tab" data-provider="gemini">Gemini</button>
+        </div>
+        <div id="panel-groq" class="provider-panel">
+          <p style="font-size:.8rem;color:var(--text2);margin-bottom:.5rem">Free at <strong>console.groq.com</strong> — no credit card. Model: llama-3.1-8b-instant</p>
+          <input id="groq-key" class="ctx-input" type="password" placeholder="gsk_…" style="width:100%;margin-bottom:.5rem">
+          <button class="btn btn-primary" id="save-groq">Save Groq Key</button>
+        </div>
+        <div id="panel-gemini" class="provider-panel" style="display:none">
+          <p style="font-size:.8rem;color:var(--text2);margin-bottom:.5rem">Free at <strong>aistudio.google.com/apikey</strong>. Model: gemini-1.5-flash</p>
+          <input id="gemini-key" class="ctx-input" type="password" placeholder="AIza…" style="width:100%;margin-bottom:.5rem">
+          <button class="btn btn-primary" id="save-gemini">Save Gemini Key</button>
+        </div>
+      </div>
+      <div class="field"><label>About</label>
+        <p style="font-size:.82rem;color:var(--text2);line-height:1.6">
+          Built by <strong>Yashwanth</strong> · B.Tech AI & DS, Sem 4 · PIET Parul University<br>
+          API keys stored locally in your browser only — never sent anywhere except the AI provider you choose.<br>
+          <a href="https://github.com/Yash-1505" target="_blank" style="color:var(--accent)">github.com/Yash-1505</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script src="js/prompts.js"></script>
+<script src="js/curricula.js"></script>
+<script src="js/community.js"></script>
+</body>
+</html>

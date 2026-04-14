@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="glass">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Document Prompts — VaultLM</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-brand">Vault<span>LM</span></div>
+  <div class="nav-links">
+    <a href="index.html" data-page="index.html">Home</a>
+    <a href="media.html" data-page="media.html">Media</a>
+    <a href="documents.html" data-page="documents.html">Documents</a>
+    <a href="practice.html" data-page="practice.html">Practice</a>
+    <a href="visuals.html" data-page="visuals.html">Visuals</a>
+    <a href="subjects.html" data-page="subjects.html">Subjects</a>
+    <a href="community.html" data-page="community.html">Community</a>
+  </div>
+  <div class="nav-actions">
+    <button class="btn-icon" id="settings-btn">⚙</button>
+    <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+  </div>
+</nav>
+<div class="drawer-overlay" id="drawer-overlay"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-head">Vault<span>LM</span></div>
+  <nav class="drawer-nav">
+    <div class="drawer-section">Main</div>
+    <a href="index.html" data-page="index.html"><span class="nav-icon">🏠</span>Home</a>
+    <div class="drawer-section">Prompts</div>
+    <a href="media.html" data-page="media.html"><span class="nav-icon">🎙</span>Media</a>
+    <a href="documents.html" data-page="documents.html"><span class="nav-icon">📄</span>Documents</a>
+    <a href="practice.html" data-page="practice.html"><span class="nav-icon">🃏</span>Practice</a>
+    <a href="visuals.html" data-page="visuals.html"><span class="nav-icon">📊</span>Visuals</a>
+    <div class="drawer-section">Resources</div>
+    <a href="subjects.html" data-page="subjects.html"><span class="nav-icon">📚</span>Subjects</a>
+    <a href="community.html" data-page="community.html"><span class="nav-icon">🌐</span>Community</a>
+  </nav>
+</div>
+
+<div class="main">
+  <div class="page-head">
+    <div class="page-title">📄 Document Prompts</div>
+    <div class="page-sub">Reports — all 8 formats including 4 AI-suggested</div>
+  </div>
+
+  <div class="ctx-bar">
+    <div class="ctx-bar-head">
+      <span class="ctx-label">📍 Context</span>
+      <button class="btn btn-primary" id="ctx-apply">Apply</button>
+    </div>
+    <div class="ctx-inputs">
+      <input class="ctx-input" data-ctx="subject" placeholder="Subject">
+      <input class="ctx-input" data-ctx="unit" placeholder="Unit">
+      <input class="ctx-input" data-ctx="topic" placeholder="Topic">
+    </div>
+    <div class="ctx-ai-row">
+      <input class="ctx-ai-input" id="ctx-ai-input" placeholder="Paste text — AI extracts context">
+      <button class="btn btn-primary" id="ctx-ai">✦ AI</button>
+    </div>
+  </div>
+
+  <div class="filter-row" id="fmt-filter">
+    <button class="chip active" data-fmt="all">All (8)</button>
+    <button class="chip" data-fmt="standard">Standard (4)</button>
+    <button class="chip" data-fmt="ai">✦ AI Suggested (4)</button>
+  </div>
+
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input class="search-input" id="search" placeholder="Search reports…">
+  </div>
+
+  <div class="prompt-grid" id="prompt-grid"></div>
+</div>
+
+<div class="modal-overlay" id="settings-overlay">
+  <div class="modal">
+    <div class="modal-head"><div class="modal-title">⚙ Settings</div><button class="btn-icon" id="settings-close">✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Theme</label>
+        <div class="theme-grid">
+          <button class="theme-btn" data-theme="glass">◈ Glass</button>
+          <button class="theme-btn" data-theme="editorial">◻ Editorial</button>
+          <button class="theme-btn" data-theme="terminal">▸ Terminal</button>
+          <button class="theme-btn" data-theme="blocks">◼ Blocks</button>
+        </div>
+      </div>
+      <div class="field"><label>AI Keys</label>
+        <div class="provider-tabs"><button class="p-tab active" data-provider="groq">Groq</button><button class="p-tab" data-provider="gemini">Gemini</button></div>
+        <div id="panel-groq" class="provider-panel"><input id="groq-key" class="ctx-input" type="password" placeholder="gsk_…" style="width:100%;margin-bottom:.5rem"><button class="btn btn-primary" id="save-groq">Save</button></div>
+        <div id="panel-gemini" class="provider-panel" style="display:none"><input id="gemini-key" class="ctx-input" type="password" placeholder="AIza…" style="width:100%;margin-bottom:.5rem"><button class="btn btn-primary" id="save-gemini">Save</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script src="js/prompts.js"></script>
+<script>
+const AI_FMTS = ['Curriculum Strategy','Position Paper','Conceptual Anatomy','Technology Primer'];
+let activeFmt = 'all', query = '';
+
+function getReports() {
+  return PROMPTS.filter(p => p.tool === 'Reports');
+}
+function filterReports(ps) {
+  const q = query.toLowerCase();
+  return ps.filter(p => {
+    const matchFmt = activeFmt === 'all' || (activeFmt === 'ai' && AI_FMTS.includes(p.fmt)) || (activeFmt === 'standard' && !AI_FMTS.includes(p.fmt));
+    const matchQ = !q || p.text.toLowerCase().includes(q) || p.fmt.toLowerCase().includes(q) || p.tip.toLowerCase().includes(q);
+    return matchFmt && matchQ;
+  });
+}
+function render() { renderPrompts(filterReports(getReports()), document.getElementById('prompt-grid'), {src:'core',showShare:true}); }
+
+document.querySelectorAll('#fmt-filter .chip').forEach(c => {
+  c.addEventListener('click', () => {
+    document.querySelectorAll('#fmt-filter .chip').forEach(x => x.classList.remove('active'));
+    c.classList.add('active'); activeFmt = c.dataset.fmt; render();
+  });
+});
+document.getElementById('search').addEventListener('input', e => { query = e.target.value; render(); });
+render();
+</script>
+</body>
+</html>

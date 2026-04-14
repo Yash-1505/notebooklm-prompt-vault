@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="glass">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Subjects — VaultLM</title>
+<link rel="stylesheet" href="css/styles.css">
+<style>
+/* ── cascade layout ─────────────────────────────────────── */
+.cascade-row {
+  display: grid; gap: 1rem;
+  grid-template-columns: 1fr;
+  margin-bottom: 1rem;
+}
+@media(min-width:600px)  { .cascade-row { grid-template-columns: 1fr 1fr 1fr; } }
+
+.cascade-row + .cascade-row {
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.row-label {
+  grid-column: 1 / -1;
+  font-size: 0.7rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .1em;
+  color: var(--text3); margin-bottom: -0.25rem;
+}
+
+/* ── individual select wrapper ──────────────────────────── */
+.select-wrap { display: flex; flex-direction: column; gap: 0.35rem; }
+.select-wrap label {
+  font-size: 0.72rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .08em;
+  color: var(--text3);
+}
+.select-step {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-size: 0.65rem; font-weight: 800;
+  margin-right: 0.3rem; flex-shrink: 0;
+}
+.vault-select {
+  width: 100%; padding: 0.72rem 2.4rem 0.72rem 0.9rem;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text);
+  font-size: 0.88rem; font-family: var(--font-body);
+  cursor: pointer; appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2394a3b8' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 0.85rem center;
+  transition: border-color .15s, box-shadow .15s;
+}
+.vault-select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+.vault-select:disabled { opacity: 0.38; cursor: not-allowed; }
+.vault-select option { background: var(--bg2); color: var(--text); }
+[data-theme="terminal"] .vault-select { background-color: var(--bg2); }
+
+/* ── breadcrumb trail ───────────────────────────────────── */
+.breadcrumb {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 0.3rem;
+  font-size: 0.78rem; color: var(--text3);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 0.6rem 0.9rem;
+  margin-bottom: 0.75rem; min-height: 2.4rem;
+  transition: border-color .2s;
+}
+.breadcrumb.active { border-color: var(--accent); }
+.bc-sep { color: var(--text3); opacity: 0.4; margin: 0 0.1rem; }
+.bc-item { color: var(--text2); }
+.bc-item.set { color: var(--accent); font-weight: 600; }
+
+/* ── context result card ────────────────────────────────── */
+.ctx-result {
+  display: none; background: var(--surface2);
+  border: 1px solid var(--accent); border-radius: var(--radius);
+  padding: 1rem 1.2rem; margin-bottom: 1rem;
+}
+.ctx-result.visible { display: block; }
+.ctx-grid {
+  display: grid; grid-template-columns: auto 1fr;
+  gap: 0.2rem 0.75rem; align-items: baseline;
+}
+.ctx-key {
+  font-size: 0.68rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .08em;
+  color: var(--text3); white-space: nowrap;
+}
+.ctx-val { font-size: 0.88rem; font-weight: 600; }
+.ctx-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.6rem; }
+.ctx-chip {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  padding: 0.18rem 0.55rem; border-radius: var(--radius-sm);
+  font-size: 0.67rem; font-weight: 700;
+  background: var(--surface); border: 1px solid var(--border); color: var(--text2);
+}
+.ctx-chip.accent { border-color: var(--accent); color: var(--accent); background: rgba(99,102,241,.08); }
+.ctx-status {
+  margin-top: 0.65rem; padding-top: 0.65rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.8rem; display: flex; align-items: center; gap: 0.4rem;
+}
+
+/* ── action buttons ─────────────────────────────────────── */
+.action-row { display: none; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+.action-row.visible { display: flex; }
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-brand">Vault<span>LM</span></div>
+  <div class="nav-links">
+    <a href="index.html" data-page="index.html">Home</a>
+    <a href="media.html" data-page="media.html">Media</a>
+    <a href="documents.html" data-page="documents.html">Documents</a>
+    <a href="practice.html" data-page="practice.html">Practice</a>
+    <a href="visuals.html" data-page="visuals.html">Visuals</a>
+    <a href="subjects.html" data-page="subjects.html">Subjects</a>
+    <a href="community.html" data-page="community.html">Community</a>
+  </div>
+  <div class="nav-actions">
+    <button class="btn-icon" id="settings-btn">⚙</button>
+    <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+  </div>
+</nav>
+<div class="drawer-overlay" id="drawer-overlay"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-head">Vault<span>LM</span></div>
+  <nav class="drawer-nav">
+    <div class="drawer-section">Main</div>
+    <a href="index.html" data-page="index.html"><span class="nav-icon">🏠</span>Home</a>
+    <div class="drawer-section">Prompts</div>
+    <a href="media.html" data-page="media.html"><span class="nav-icon">🎙</span>Media</a>
+    <a href="documents.html" data-page="documents.html"><span class="nav-icon">📄</span>Documents</a>
+    <a href="practice.html" data-page="practice.html"><span class="nav-icon">🃏</span>Practice</a>
+    <a href="visuals.html" data-page="visuals.html"><span class="nav-icon">📊</span>Visuals</a>
+    <div class="drawer-section">Resources</div>
+    <a href="subjects.html" data-page="subjects.html"><span class="nav-icon">📚</span>Subjects</a>
+    <a href="community.html" data-page="community.html"><span class="nav-icon">🌐</span>Community</a>
+  </nav>
+</div>
+
+<div class="main">
+  <div class="page-head">
+    <div class="page-title">📚 Subjects</div>
+    <div class="page-sub">Select Year → Semester → Course, then Subject → Chapter → Topic. Context auto-fills every prompt on every page.</div>
+  </div>
+
+  <!-- STAT BAR -->
+  <div class="stat-bar" style="margin-bottom:1.25rem">
+    <div class="stat-item"><span class="stat-num">5</span> Batches</div>
+    <div class="stat-item"><span class="stat-num">51</span> Subjects</div>
+    <div class="stat-item"><span class="stat-num">240+</span> Units</div>
+    <div class="stat-item"><span class="stat-num">Sem 2 · 4 · 6</span></div>
+  </div>
+
+  <!-- ROW 1: Year → Semester → Course -->
+  <div class="cascade-row">
+    <div class="row-label">Row 1 — Narrow down your class</div>
+
+    <div class="select-wrap">
+      <label><span class="select-step">1</span>Year</label>
+      <select class="vault-select" id="sel-year">
+        <option value="">— Select Year —</option>
+      </select>
+    </div>
+
+    <div class="select-wrap">
+      <label><span class="select-step">2</span>Semester</label>
+      <select class="vault-select" id="sel-sem" disabled>
+        <option value="">— Select Semester —</option>
+      </select>
+    </div>
+
+    <div class="select-wrap">
+      <label><span class="select-step">3</span>Course</label>
+      <select class="vault-select" id="sel-course" disabled>
+        <option value="">— Select Course —</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- ROW 2: Subject → Chapter → Topic -->
+  <div class="cascade-row">
+    <div class="row-label">Row 2 — Pick your topic</div>
+
+    <div class="select-wrap">
+      <label><span class="select-step">4</span>Subject</label>
+      <select class="vault-select" id="sel-subject" disabled>
+        <option value="">— Select Subject —</option>
+      </select>
+    </div>
+
+    <div class="select-wrap">
+      <label><span class="select-step">5</span>Chapter</label>
+      <select class="vault-select" id="sel-chapter" disabled>
+        <option value="">— Select Chapter —</option>
+      </select>
+    </div>
+
+    <div class="select-wrap">
+      <label><span class="select-step">6</span>Topic <span style="font-weight:400;text-transform:none;letter-spacing:0;opacity:.7">(optional)</span></label>
+      <select class="vault-select" id="sel-topic" disabled>
+        <option value="">— Select Topic —</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- BREADCRUMB TRAIL -->
+  <div class="breadcrumb" id="breadcrumb">
+    <span style="opacity:.45;font-size:.75rem">Start by selecting a Year above →</span>
+  </div>
+
+  <!-- CONTEXT RESULT CARD -->
+  <div class="ctx-result" id="ctx-result">
+    <div class="ctx-grid">
+      <span class="ctx-key">Subject</span>
+      <span class="ctx-val" id="res-subject" style="color:var(--accent)">—</span>
+
+      <span class="ctx-key">Chapter</span>
+      <span class="ctx-val" id="res-chapter" style="color:var(--text2)">—</span>
+
+      <span class="ctx-key">Topic</span>
+      <span class="ctx-val" id="res-topic" style="color:var(--text3)">—</span>
+    </div>
+    <div class="ctx-chips" id="res-chips"></div>
+    <div class="ctx-status" id="res-status">
+      <span id="res-status-icon">⚡</span>
+      <span id="res-status-text">Select a subject to begin</span>
+    </div>
+  </div>
+
+  <!-- ACTION BUTTONS -->
+  <div class="action-row" id="action-row">
+    <button class="btn btn-primary" id="btn-apply">✓ Apply Context to All Pages</button>
+    <a class="btn" href="media.html">🎙 Media</a>
+    <a class="btn" href="documents.html">📄 Documents</a>
+    <a class="btn" href="practice.html">🃏 Practice</a>
+    <a class="btn" href="visuals.html">📊 Visuals</a>
+    <a class="btn" href="community.html">🌐 Community</a>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settings-overlay">
+  <div class="modal">
+    <div class="modal-head"><div class="modal-title">⚙ Settings</div><button class="btn-icon" id="settings-close">✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Theme</label>
+        <div class="theme-grid">
+          <button class="theme-btn" data-theme="glass">◈ Glass</button>
+          <button class="theme-btn" data-theme="editorial">◻ Editorial</button>
+          <button class="theme-btn" data-theme="terminal">▸ Terminal</button>
+          <button class="theme-btn" data-theme="blocks">◼ Blocks</button>
+        </div>
+      </div>
+      <div class="field"><label>AI Keys</label>
+        <div class="provider-tabs">
+          <button class="p-tab active" data-provider="groq">Groq</button>
+          <button class="p-tab" data-provider="gemini">Gemini</button>
+        </div>
+        <div id="panel-groq" class="provider-panel">
+          <input id="groq-key" class="ctx-input" type="password" placeholder="gsk_…" style="width:100%;margin-bottom:.5rem">
+          <button class="btn btn-primary" id="save-groq">Save</button>
+        </div>
+        <div id="panel-gemini" class="provider-panel" style="display:none">
+          <input id="gemini-key" class="ctx-input" type="password" placeholder="AIza…" style="width:100%;margin-bottom:.5rem">
+          <button class="btn btn-primary" id="save-gemini">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script src="js/curricula.js"></script>
+<script>
+// ── element refs ──────────────────────────────────────────────────────────
+const selYear    = document.getElementById('sel-year');
+const selSem     = document.getElementById('sel-sem');
+const selCourse  = document.getElementById('sel-course');
+const selSubject = document.getElementById('sel-subject');
+const selChapter = document.getElementById('sel-chapter');
+const selTopic   = document.getElementById('sel-topic');
+const ctxResult  = document.getElementById('ctx-result');
+const actionRow  = document.getElementById('action-row');
+const breadcrumb = document.getElementById('breadcrumb');
+
+// ── state ─────────────────────────────────────────────────────────────────
+let state = { year: null, sem: null, batchKey: null, subjectIdx: null, chapterIdx: null };
+
+// ── helpers ───────────────────────────────────────────────────────────────
+
+// Smart split that respects parentheses: "Topic1, Topic2 (A, B), Topic3" → 3 items
+function splitTopics(str) {
+  const parts = []; let depth = 0, cur = '';
+  for (const ch of str) {
+    if (ch === '(' || ch === '[') depth++;
+    else if (ch === ')' || ch === ']') depth--;
+    else if (ch === ',' && depth === 0) { parts.push(cur.trim()); cur = ''; continue; }
+    cur += ch;
+  }
+  if (cur.trim()) parts.push(cur.trim());
+  return parts.filter(Boolean);
+}
+
+// Parse "Chapter — Topic1, Topic2" → { chapter, topics[] }
+function parseUnit(unitStr) {
+  const sep = unitStr.indexOf(' — ');
+  if (sep === -1) return { chapter: unitStr, topics: [] };
+  const chapter = unitStr.slice(0, sep).trim();
+  const topicStr = unitStr.slice(sep + 3).trim();
+  return { chapter, topics: splitTopics(topicStr) };
+}
+
+function reset(from) {
+  // from: 'year'|'sem'|'course'|'subject'|'chapter'
+  const order = ['year','sem','course','subject','chapter'];
+  const idx = order.indexOf(from);
+  if (idx <= 0) { selSem.innerHTML    = '<option value="">— Select Semester —</option>';    selSem.disabled = true; state.sem = null; }
+  if (idx <= 1) { selCourse.innerHTML = '<option value="">— Select Course —</option>';     selCourse.disabled = true; state.batchKey = null; }
+  if (idx <= 2) { selSubject.innerHTML= '<option value="">— Select Subject —</option>';    selSubject.disabled = true; state.subjectIdx = null; }
+  if (idx <= 3) { selChapter.innerHTML= '<option value="">— Select Chapter —</option>';    selChapter.disabled = true; state.chapterIdx = null; }
+  if (idx <= 4) { selTopic.innerHTML  = '<option value="">— Select Topic —</option>';      selTopic.disabled = true; }
+  ctxResult.classList.remove('visible');
+  actionRow.classList.remove('visible');
+}
+
+function updateBreadcrumb() {
+  const parts = [];
+  if (state.year)     parts.push({ label: `Year ${state.year}`, set: true });
+  if (state.sem)      parts.push({ label: `Sem ${state.sem}`, set: true });
+  if (state.batchKey) {
+    const b = CURRICULA[state.batchKey];
+    parts.push({ label: b.shortBranch, set: true });
+  }
+  if (state.subjectIdx !== null && state.batchKey) {
+    const s = CURRICULA[state.batchKey].subjects[state.subjectIdx];
+    parts.push({ label: s.name, set: true });
+  }
+  if (state.chapterIdx !== null && state.subjectIdx !== null && state.batchKey) {
+    const unitStr = CURRICULA[state.batchKey].subjects[state.subjectIdx].units[state.chapterIdx];
+    const { chapter } = parseUnit(unitStr);
+    parts.push({ label: chapter, set: true });
+  }
+
+  if (!parts.length) {
+    breadcrumb.classList.remove('active');
+    breadcrumb.innerHTML = '<span style="opacity:.45;font-size:.75rem">Start by selecting a Year above →</span>';
+    return;
+  }
+  breadcrumb.classList.add('active');
+  breadcrumb.innerHTML = parts.map((p, i) =>
+    `${i > 0 ? '<span class="bc-sep">›</span>' : ''}<span class="bc-item ${p.set ? 'set' : ''}">${p.label}</span>`
+  ).join('');
+}
+
+function saveAndSync(subjectName, chapterName, topicName) {
+  // Core sync: save to Context (localStorage + prompt refresh + input sync)
+  Context.save(subjectName, chapterName, topicName);
+  // Extra localStorage for breadcrumb restore on next visit
+  localStorage.setItem('ctx-year',   state.year     || '');
+  localStorage.setItem('ctx-sem',    state.sem      || '');
+  localStorage.setItem('ctx-bkey',   state.batchKey || '');
+  localStorage.setItem('ctx-sidx',   state.subjectIdx !== null ? state.subjectIdx : '');
+  localStorage.setItem('ctx-cidx',   state.chapterIdx !== null ? state.chapterIdx : '');
+}
+
+function updateResultCard(subj, chapterName, topicName) {
+  document.getElementById('res-subject').textContent = subj.name;
+
+  const chapEl = document.getElementById('res-chapter');
+  chapEl.textContent = chapterName || 'Not selected';
+  chapEl.style.color = chapterName ? 'var(--text)' : 'var(--text3)';
+
+  const topicEl = document.getElementById('res-topic');
+  topicEl.textContent = topicName || 'Not selected (chapter only)';
+  topicEl.style.color = topicName ? 'var(--text)' : 'var(--text3)';
+
+  // Chips
+  const chips = document.getElementById('res-chips');
+  chips.innerHTML = [
+    `<span class="ctx-chip accent">${subj.code}</span>`,
+    `<span class="ctx-chip">${subj.credits} credits</span>`,
+    `<span class="ctx-chip">${subj.type}</span>`,
+    state.batchKey ? `<span class="ctx-chip">${CURRICULA[state.batchKey].shortBranch}</span>` : '',
+    state.sem ? `<span class="ctx-chip">Sem ${state.sem}</span>` : ''
+  ].join('');
+
+  // Status
+  const icon = document.getElementById('res-status-icon');
+  const text = document.getElementById('res-status-text');
+  if (topicName) {
+    icon.textContent = '✓'; text.textContent = 'Subject + Chapter + Topic set — all prompts updated';
+    document.getElementById('res-status').style.color = 'var(--success)';
+  } else if (chapterName) {
+    icon.textContent = '⚡'; text.textContent = 'Subject + Chapter set — select a Topic for best results';
+    document.getElementById('res-status').style.color = 'var(--accent2)';
+  } else {
+    icon.textContent = '→'; text.textContent = 'Subject set — select a Chapter to continue';
+    document.getElementById('res-status').style.color = 'var(--text3)';
+  }
+  ctxResult.classList.add('visible');
+  actionRow.classList.add('visible');
+}
+
+// ── populate Year dropdown ────────────────────────────────────────────────
+const years = [...new Set(Object.values(CURRICULA).map(b => b.year))].sort();
+years.forEach(y => {
+  const o = document.createElement('option');
+  o.value = y;
+  const semLabel = Object.values(CURRICULA).filter(b => b.year === y).map(b => b.sem)[0];
+  o.textContent = `Year ${y}  (Sem ${semLabel})`;
+  selYear.appendChild(o);
+});
+
+// ── Year → Semester ───────────────────────────────────────────────────────
+selYear.addEventListener('change', () => {
+  const y = parseInt(selYear.value);
+  reset('year');
+  if (!y) { updateBreadcrumb(); return; }
+  state.year = y;
+
+  // Semesters available for this year
+  const sems = [...new Set(
+    Object.values(CURRICULA).filter(b => b.year === y).map(b => b.sem)
+  )].sort();
+  selSem.innerHTML = '<option value="">— Select Semester —</option>';
+  sems.forEach(s => {
+    const o = document.createElement('option');
+    o.value = s; o.textContent = `Semester ${s}`;
+    selSem.appendChild(o);
+  });
+  selSem.disabled = false;
+  // Auto-select if only one sem for this year
+  if (sems.length === 1) { selSem.value = sems[0]; selSem.dispatchEvent(new Event('change')); }
+  updateBreadcrumb();
+});
+
+// ── Semester → Course ─────────────────────────────────────────────────────
+selSem.addEventListener('change', () => {
+  const s = parseInt(selSem.value);
+  reset('sem');
+  if (!s) { updateBreadcrumb(); return; }
+  state.sem = s;
+
+  const batches = Object.entries(CURRICULA).filter(([, b]) => b.year === state.year && b.sem === s);
+  selCourse.innerHTML = '<option value="">— Select Course —</option>';
+  batches.forEach(([key, b]) => {
+    const o = document.createElement('option');
+    o.value = key; o.textContent = b.shortBranch;
+    selCourse.appendChild(o);
+  });
+  selCourse.disabled = false;
+  if (batches.length === 1) { selCourse.value = batches[0][0]; selCourse.dispatchEvent(new Event('change')); }
+  updateBreadcrumb();
+});
+
+// ── Course → Subject ──────────────────────────────────────────────────────
+selCourse.addEventListener('change', () => {
+  const key = selCourse.value;
+  reset('course');
+  if (!key) { updateBreadcrumb(); return; }
+  state.batchKey = key;
+
+  selSubject.innerHTML = '<option value="">— Select Subject —</option>';
+  CURRICULA[key].subjects.forEach((s, i) => {
+    const o = document.createElement('option');
+    o.value = i;
+    o.textContent = `${s.name}  (${s.credits} cr · ${s.type})`;
+    selSubject.appendChild(o);
+  });
+  selSubject.disabled = false;
+  updateBreadcrumb();
+});
+
+// ── Subject → Chapter ─────────────────────────────────────────────────────
+selSubject.addEventListener('change', () => {
+  const idx = selSubject.value;
+  reset('subject');
+  if (idx === '' || !state.batchKey) { updateBreadcrumb(); return; }
+  state.subjectIdx = parseInt(idx);
+
+  const subj = CURRICULA[state.batchKey].subjects[state.subjectIdx];
+  selChapter.innerHTML = '<option value="">— Select Chapter —</option>';
+  subj.units.forEach((u, i) => {
+    const { chapter } = parseUnit(u);
+    const o = document.createElement('option');
+    o.value = i;
+    o.textContent = `${i + 1}. ${chapter}`;
+    selChapter.appendChild(o);
+  });
+  selChapter.disabled = false;
+
+  // Save subject-only context immediately so other pages update
+  saveAndSync(subj.name, '', '');
+  updateResultCard(subj, '', '');
+  updateBreadcrumb();
+});
+
+// ── Chapter → Topic ───────────────────────────────────────────────────────
+selChapter.addEventListener('change', () => {
+  const cidx = selChapter.value;
+  reset('chapter');
+  if (cidx === '' || state.subjectIdx === null || !state.batchKey) { updateBreadcrumb(); return; }
+  state.chapterIdx = parseInt(cidx);
+
+  const subj    = CURRICULA[state.batchKey].subjects[state.subjectIdx];
+  const unitStr = subj.units[state.chapterIdx];
+  const { chapter, topics } = parseUnit(unitStr);
+
+  selTopic.innerHTML = '<option value="">— Select Topic —</option>';
+  if (topics.length) {
+    topics.forEach((t, i) => {
+      const o = document.createElement('option');
+      o.value = i; o.textContent = t;
+      selTopic.appendChild(o);
+    });
+    selTopic.disabled = false;
+  } else {
+    // No topics — chapter IS the full unit, disable topic select
+    const o = document.createElement('option');
+    o.value = 'none'; o.textContent = '(no sub-topics for this chapter)';
+    selTopic.appendChild(o);
+    selTopic.disabled = true;
+  }
+
+  // Save subject + chapter immediately
+  saveAndSync(subj.name, chapter, '');
+  updateResultCard(subj, chapter, '');
+  updateBreadcrumb();
+  showToast('Chapter set ✓', 'success');
+});
+
+// ── Topic selected ────────────────────────────────────────────────────────
+selTopic.addEventListener('change', () => {
+  const tidx = selTopic.value;
+  if (!state.batchKey || state.subjectIdx === null || state.chapterIdx === null) return;
+
+  const subj    = CURRICULA[state.batchKey].subjects[state.subjectIdx];
+  const unitStr = subj.units[state.chapterIdx];
+  const { chapter, topics } = parseUnit(unitStr);
+  const topicName = tidx !== '' ? topics[parseInt(tidx)] || '' : '';
+
+  // ★ FULL SYNC: subject + chapter + topic → Context → localStorage → all prompt pages
+  saveAndSync(subj.name, chapter, topicName);
+  updateResultCard(subj, chapter, topicName);
+  if (topicName) showToast('Context synced to all pages ✓', 'success');
+});
+
+// ── Apply button ──────────────────────────────────────────────────────────
+document.getElementById('btn-apply').addEventListener('click', () => {
+  if (!state.batchKey || state.subjectIdx === null) {
+    showToast('Select a subject first'); return;
+  }
+  const subj    = CURRICULA[state.batchKey].subjects[state.subjectIdx];
+  const chapter = state.chapterIdx !== null
+    ? parseUnit(subj.units[state.chapterIdx]).chapter : '';
+  const tidx    = selTopic.value;
+  const topic   = (tidx !== '' && tidx !== 'none' && state.chapterIdx !== null)
+    ? (parseUnit(subj.units[state.chapterIdx]).topics[parseInt(tidx)] || '') : '';
+  saveAndSync(subj.name, chapter, topic);
+  updateResultCard(subj, chapter, topic);
+  showToast('Context applied to all pages ✓', 'success');
+});
+
+// ── Restore previous session on load ─────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const y    = parseInt(localStorage.getItem('ctx-year')  || '0');
+  const s    = parseInt(localStorage.getItem('ctx-sem')   || '0');
+  const bkey = localStorage.getItem('ctx-bkey') || '';
+  const sidx = localStorage.getItem('ctx-sidx');
+  const cidx = localStorage.getItem('ctx-cidx');
+
+  if (y && CURRICULA) {
+    // Restore year
+    selYear.value = y;
+    selYear.dispatchEvent(new Event('change'));
+
+    // Restore sem
+    setTimeout(() => {
+      if (s) {
+        selSem.value = s;
+        selSem.dispatchEvent(new Event('change'));
+
+        // Restore course
+        setTimeout(() => {
+          if (bkey && CURRICULA[bkey]) {
+            selCourse.value = bkey;
+            selCourse.dispatchEvent(new Event('change'));
+
+            // Restore subject
+            setTimeout(() => {
+              if (sidx !== '' && sidx !== null) {
+                selSubject.value = sidx;
+                selSubject.dispatchEvent(new Event('change'));
+
+                // Restore chapter
+                setTimeout(() => {
+                  if (cidx !== '' && cidx !== null) {
+                    selChapter.value = cidx;
+                    selChapter.dispatchEvent(new Event('change'));
+                  }
+                }, 50);
+              }
+            }, 50);
+          }
+        }, 50);
+      }
+    }, 50);
+  } else {
+    // No saved session — show last known context as info
+    const subj = localStorage.getItem('ctx-subject') || '';
+    const unit = localStorage.getItem('ctx-unit') || '';
+    const topic = localStorage.getItem('ctx-topic') || '';
+    if (subj) {
+      document.getElementById('res-subject').textContent = subj;
+      document.getElementById('res-chapter').textContent = unit || '—';
+      document.getElementById('res-topic').textContent   = topic || '—';
+      document.getElementById('res-status-icon').textContent = '↑';
+      document.getElementById('res-status-text').textContent = 'Saved from previous session — use selects above to update';
+      document.getElementById('res-status').style.color = 'var(--text3)';
+      ctxResult.classList.add('visible');
+    }
+  }
+});
+</script>
+</body>
+</html>
