@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Year 3 — B.Tech · VaultLM</title>
+  <link rel="stylesheet" href="../../css/styles.css" />
+  <!-- Shares identical CSS as year1.html — copy the <style> block from year1.html -->
+  <link rel="stylesheet" href="year1-shared.css" />
+</head>
+<body>
+  <nav class="topnav">
+    <a class="brand" href="../../index.html">VaultLM</a>
+    <div class="nav-links">
+      <a href="../../index.html">Home</a>
+      <a href="../../media.html">Media</a>
+      <a href="../../documents.html">Documents</a>
+      <a href="../../practice.html">Practice</a>
+      <a href="../../visuals.html">Visuals</a>
+      <a href="../../subjects.html">Subjects</a>
+      <a href="../../community.html">Community</a>
+    </div>
+  </nav>
+
+  <header class="yr-hero">
+    <div class="yr-breadcrumb">
+      <a href="../../subjects.html">Subjects</a> › <span>B.Tech</span> › <span>Year 3</span>
+    </div>
+    <h1 class="yr-title">Year 3 — B.Tech</h1>
+    <p class="yr-subtitle">Semesters 5 &amp; 6 · Click subject → unit to auto-fill context across all prompt pages</p>
+  </header>
+
+  <div class="batch-bar">
+    <label for="batch-select">My admission year:</label>
+    <select id="batch-select"></select>
+    <span class="ay-display" id="ay-label">AY —</span>
+  </div>
+
+  <div class="course-tabs" id="course-tabs"></div>
+  <main id="sem-container"></main>
+
+  <div class="apply-bar" id="apply-bar">
+    <div class="sel-info" id="sel-info">Select a unit to begin</div>
+    <div class="apply-links">
+      <a href="../../media.html">🎙 Media</a>
+      <a href="../../documents.html">📄 Documents</a>
+      <a href="../../practice.html">🃏 Practice</a>
+      <a href="../../visuals.html">📊 Visuals</a>
+    </div>
+  </div>
+
+  <script type="module">
+    // Year 3 curricula
+    const PAGE_YEAR = 3;
+    let CURRICULA_THIS_YEAR = [];
+
+    try {
+      // Dynamic import — add new curricula here as semesters are added
+      const modules = await Promise.allSettled([
+        import('../../js/curricula/btech/ai-6.js').then(m => m.AI_6),
+        import('../../js/curricula/btech/aiml-6.js').then(m => m.AIML_6),
+      ]);
+      CURRICULA_THIS_YEAR = modules
+        .filter(r => r.status === 'fulfilled')
+        .map(r => r.value);
+    } catch(e) { console.warn('Curricula load error', e); }
+
+    // ── Shared page logic (identical to year1.html) ──────────
+    const BY_SEM = {};
+    for (const c of CURRICULA_THIS_YEAR) {
+      if (!BY_SEM[c.sem]) BY_SEM[c.sem] = [];
+      BY_SEM[c.sem].push(c);
+    }
+
+    let activeCourse = 'all';
+    let batchYear = parseInt(localStorage.getItem('vault-batch-year') || '2024');
+
+    const batchSel = document.getElementById('batch-select');
+    const ayLabel  = document.getElementById('ay-label');
+    const currentYear = new Date().getFullYear();
+    for (let y = currentYear - 4; y <= currentYear + 2; y++) {
+      const opt = document.createElement('option');
+      opt.value = y; opt.textContent = y;
+      if (y === batchYear) opt.selected = true;
+      batchSel.appendChild(opt);
+    }
+
+    function updateAY() {
+      batchYear = parseInt(batchSel.value);
+      localStorage.setItem('vault-batch-year', batchYear);
+      const startYear = batchYear + (PAGE_YEAR - 1);
+      ayLabel.textContent = `AY ${startYear}–${String(startYear + 1).slice(-2)}`;
+      render();
+    }
+    batchSel.addEventListener('change', updateAY);
+
+    const courses = ['all', ...new Set(CURRICULA_THIS_YEAR.map(c => c.shortBranch))];
+    const tabContainer = document.getElementById('course-tabs');
+    function buildTabs() {
+      tabContainer.innerHTML = courses.map(c => `
+        <button class="c-tab ${c === activeCourse ? 'active' : ''}" data-course="${c}">
+          ${c === 'all' ? 'All Courses' : c}
+        </button>`).join('');
+      tabContainer.querySelectorAll('.c-tab').forEach(btn => {
+        btn.addEventListener('click', () => { activeCourse = btn.dataset.course; buildTabs(); render(); });
+      });
+    }
+
+    function render() {
+      const container = document.getElementById('sem-container');
+      const sems = Object.keys(BY_SEM).sort((a, b) => a - b);
+      if (!sems.length) {
+        container.innerHTML = '<div class="yr-empty"><p>Curriculum data for this year is coming soon.</p><p style="margin-top:.5rem;font-size:.8rem">Add modules in js/curricula/btech/ and import them above.</p></div>';
+        buildTabs(); updateAY(); return;
+      }
+      container.innerHTML = sems.map(sem => {
+        const curricula = BY_SEM[sem].filter(c => activeCourse === 'all' || c.shortBranch === activeCourse);
+        if (!curricula.length) return '';
+        return curricula.map(c => {
+          const startYear = batchYear + (PAGE_YEAR - 1);
+          const ayStr = `AY ${startYear}–${String(startYear + 1).slice(-2)}`;
+          return `<section class="sem-section" data-key="${c.key}">
+            <div class="sem-header">
+              <span class="sem-pill">Sem ${c.sem}</span>
+              <span class="sem-ay">${ayStr}</span>
+              <span class="sem-branch">${c.shortBranch}</span>
+            </div>
+            <div class="subject-grid">
+              ${c.subjects.map((s, si) => `
+                <div class="subject-card" id="card-${c.key}-${si}" onclick="toggleCard('${c.key}',${si})">
+                  <div class="subj-name">${s.name}</div>
+                  <div class="subj-meta">
+                    <span class="tag cr">${s.credits} cr</span>
+                    <span class="tag ${s.type.includes('lab')?'lab':s.type==='math'?'math':s.type==='soft'?'soft':''}">${s.type}</span>
+                    <span class="tag">${s.code}</span>
+                  </div>
+                  <div class="subj-units">${s.units.length} units</div>
+                  <div class="unit-list" id="units-${c.key}-${si}">
+                    ${s.units.map((u,ui)=>`<div class="unit-item" onclick="selectUnit(event,'${u.replace(/'/g,"\\'")}','${s.name.replace(/'/g,"\\'")}')">
+                      ${ui+1}. ${u}</div>`).join('')}
+                  </div>
+                </div>`).join('')}
+            </div>
+          </section>`;
+        }).join('');
+      }).join('');
+    }
+
+    window.toggleCard = (key,idx) => document.getElementById(`card-${key}-${idx}`)?.classList.toggle('expanded');
+    window.selectUnit = (e, unitText, subjectName) => {
+      e.stopPropagation();
+      const short = unitText.split(' — ')[0];
+      localStorage.setItem('ctx-subject', subjectName);
+      localStorage.setItem('ctx-unit', short);
+      localStorage.setItem('ctx-topic', '');
+      const bar = document.getElementById('apply-bar');
+      bar.classList.add('visible');
+      document.getElementById('sel-info').innerHTML =
+        `<strong>${subjectName}</strong> · ${short.slice(0,60)}${short.length>60?'…':''}`;
+      document.querySelectorAll('.unit-item').forEach(el => el.style.fontWeight='');
+      e.currentTarget.style.fontWeight='700';
+    };
+
+    buildTabs();
+    updateAY();
+  </script>
+  <script src="../../js/app.js"></script>
+</body>
+</html>

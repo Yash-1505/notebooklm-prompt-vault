@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Year 1 — Dual Degree (NNDL) · VaultLM</title>
+  <link rel="stylesheet" href="../../css/styles.css" />
+  <style>
+    /* ── Page chrome ── */
+    .yr-hero { padding: 2.5rem 1.5rem 1.5rem; border-bottom: 1px solid var(--border); }
+    .yr-breadcrumb { font-size:.75rem; color:var(--muted); margin-bottom:.75rem; display:flex; align-items:center; gap:.4rem; }
+    .yr-breadcrumb a { color:var(--accent); text-decoration:none; }
+    .yr-title { font-size:1.75rem; font-weight:700; margin:0 0 .3rem; }
+    .yr-subtitle { color:var(--muted); font-size:.9rem; }
+    .yr-badge {
+      display:inline-block; margin-top:.5rem; padding:.25rem .75rem; border-radius:20px;
+      background:color-mix(in srgb,var(--accent) 12%,transparent);
+      color:var(--accent); font-size:.78rem; font-weight:600;
+      border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);
+    }
+
+    /* ── Enrolment year picker ── */
+    .batch-bar {
+      display:flex; align-items:center; gap:.75rem; padding:1rem 1.5rem;
+      border-bottom:1px solid var(--border); flex-wrap:wrap;
+    }
+    .batch-bar label { font-size:.85rem; color:var(--muted); white-space:nowrap; }
+    .batch-bar select {
+      padding:.35rem .6rem; border:1px solid var(--border); border-radius:6px;
+      background:var(--surface); color:var(--text); font-size:.85rem; cursor:pointer;
+    }
+    .ay-display {
+      font-size:.85rem; background:var(--accent); color:#fff;
+      border-radius:20px; padding:.25rem .75rem; font-weight:600;
+    }
+
+    /* ── Semester section ── */
+    .sem-section { padding:1.25rem 1.5rem; border-bottom:1px solid var(--border); }
+    .sem-header { display:flex; align-items:center; gap:.75rem; margin-bottom:1rem; flex-wrap:wrap; }
+    .sem-pill { background:var(--accent); color:#fff; padding:.25rem .7rem; border-radius:20px; font-size:.78rem; font-weight:700; }
+    .sem-ay { font-size:.8rem; color:var(--muted); }
+    .sem-note { font-size:.75rem; color:var(--muted); font-style:italic; margin-left:auto; }
+
+    /* ── Subject grid ── */
+    .subject-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:.75rem; }
+    .subject-card {
+      border:1px solid var(--border); border-radius:10px; padding:.9rem 1rem;
+      background:var(--surface); cursor:pointer;
+      transition:border-color .18s, box-shadow .18s;
+    }
+    .subject-card:hover { border-color:var(--accent); box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 15%,transparent); }
+    .subject-card.placeholder { opacity:.55; cursor:default; pointer-events:none; border-style:dashed; }
+    .subj-name { font-weight:600; font-size:.9rem; margin-bottom:.3rem; line-height:1.35; }
+    .subj-meta { display:flex; gap:.4rem; flex-wrap:wrap; margin-bottom:.5rem; }
+    .tag { font-size:.7rem; padding:.15rem .5rem; border-radius:20px; border:1px solid var(--border); color:var(--muted); }
+    .tag.cr  { border-color:#6366f1; color:#6366f1; }
+    .tag.lab { border-color:#0ea5e9; color:#0ea5e9; }
+    .tag.tbd { border-color:var(--muted); color:var(--muted); font-style:italic; }
+    .subj-units { font-size:.75rem; color:var(--muted); }
+
+    /* Unit expand */
+    .unit-list { display:none; margin-top:.6rem; border-top:1px solid var(--border); padding-top:.6rem; }
+    .subject-card.expanded .unit-list { display:block; }
+    .unit-item {
+      font-size:.75rem; padding:.3rem .4rem; border-radius:5px; margin-bottom:.25rem;
+      cursor:pointer; color:var(--text); transition:background .15s; line-height:1.4;
+    }
+    .unit-item:hover {
+      background:color-mix(in srgb,var(--accent) 10%,transparent); color:var(--accent);
+    }
+
+    /* Sticky apply bar */
+    .apply-bar {
+      display:none; align-items:center; gap:.75rem; padding:.9rem 1.5rem;
+      background:color-mix(in srgb,var(--accent) 8%,transparent);
+      border-top:1px solid color-mix(in srgb,var(--accent) 20%,transparent);
+      position:sticky; bottom:0; flex-wrap:wrap;
+    }
+    .apply-bar.visible { display:flex; }
+    .sel-info { font-size:.85rem; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .sel-info strong { color:var(--accent); }
+    .apply-links { display:flex; gap:.5rem; flex-wrap:wrap; }
+    .apply-links a {
+      padding:.4rem .85rem; border-radius:6px; background:var(--accent); color:#fff;
+      text-decoration:none; font-size:.8rem; font-weight:600;
+    }
+    .apply-links a:hover { opacity:.88; }
+  </style>
+</head>
+<body>
+
+  <!-- ── Top nav ── -->
+  <nav class="topnav">
+    <a class="brand" href="../../index.html">VaultLM</a>
+    <div class="nav-links">
+      <a href="../../index.html" data-page="index.html">Home</a>
+      <a href="../../media.html" data-page="media.html">Media</a>
+      <a href="../../practice.html" data-page="practice.html">Practice</a>
+      <a href="../../documents.html" data-page="documents.html">Docs</a>
+      <a href="../../subjects.html" data-page="subjects.html">Subjects</a>
+      <a href="../../years.html" data-page="years.html" class="active">Years</a>
+      <a href="../../community.html" data-page="community.html">Community</a>
+    </div>
+    <div class="nav-actions">
+      <button id="settings-btn" class="icon-btn" title="Settings">⚙</button>
+      <button id="hamburger" class="hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+  <div id="drawer-overlay" class="drawer-overlay"></div>
+  <div id="drawer" class="drawer">
+    <a href="../../index.html" data-page="index.html">🏠 Home</a>
+    <a href="../../media.html" data-page="media.html">🎙 Media</a>
+    <a href="../../practice.html" data-page="practice.html">🃏 Practice</a>
+    <a href="../../documents.html" data-page="documents.html">📄 Docs</a>
+    <a href="../../subjects.html" data-page="subjects.html">📚 Subjects</a>
+    <a href="../../years.html" data-page="years.html">🗓 Years</a>
+    <a href="../../community.html" data-page="community.html">🌐 Community</a>
+  </div>
+
+  <!-- ── Hero ── -->
+  <div class="yr-hero">
+    <div class="yr-breadcrumb">
+      <a href="../../years.html">Years</a>
+      <span>›</span>
+      <span>Dual Degree</span>
+      <span>›</span>
+      <span>Year 1</span>
+    </div>
+    <div class="yr-title">Year 1 — Neural Networks &amp; Deep Learning</div>
+    <div class="yr-subtitle">One Year Diploma · Parul University CCEOL</div>
+    <span class="yr-badge">Dual Degree Program</span>
+  </div>
+
+  <!-- ── Enrolment year picker ── -->
+  <div class="batch-bar">
+    <label for="enrollYear">Enrollment Year:</label>
+    <select id="enrollYear"></select>
+    <span class="ay-display" id="ayBadge">AY —</span>
+    <span style="font-size:.78rem;color:var(--muted);">Both semesters run within this academic year.</span>
+  </div>
+
+  <!-- ── Semester 1 ── -->
+  <div class="sem-section">
+    <div class="sem-header">
+      <span class="sem-pill">Semester 1</span>
+      <span class="sem-ay" id="ay-sem1"></span>
+    </div>
+    <div class="subject-grid" id="grid-sem1"></div>
+  </div>
+
+  <!-- ── Semester 2 ── -->
+  <div class="sem-section">
+    <div class="sem-header">
+      <span class="sem-pill">Semester 2</span>
+      <span class="sem-ay" id="ay-sem2"></span>
+      <span class="sem-note">Includes Project (syllabus coming soon)</span>
+    </div>
+    <div class="subject-grid" id="grid-sem2"></div>
+  </div>
+
+  <!-- ── Sticky apply bar ── -->
+  <div class="apply-bar" id="applyBar">
+    <div class="sel-info">
+      <strong id="selSubj">—</strong> › <strong id="selUnit">—</strong>
+    </div>
+    <div class="apply-links">
+      <a id="goCore"     href="../../index.html">Core Prompts</a>
+      <a id="goMedia"    href="../../media.html">Media</a>
+      <a id="goPractice" href="../../practice.html">Practice</a>
+      <a id="goDocs"     href="../../documents.html">Docs</a>
+    </div>
+  </div>
+
+  <!-- ── Scripts ── -->
+  <script type="module">
+    import { ALL_CURRICULA } from '../../js/curricula/index.js';
+
+    // ── State ──
+    const enrollSel = document.getElementById('enrollYear');
+    const ayBadge   = document.getElementById('ayBadge');
+    const applyBar  = document.getElementById('applyBar');
+    const selSubj   = document.getElementById('selSubj');
+    const selUnit   = document.getElementById('selUnit');
+
+    // Populate year picker
+    const cy = new Date().getFullYear();
+    for (let y = cy - 3; y <= cy + 3; y++) {
+      const opt = document.createElement('option');
+      opt.value = y;
+      opt.textContent = y;
+      if (y === cy) opt.selected = true;
+      enrollSel.appendChild(opt);
+    }
+
+    // Restore saved enrollment year
+    const savedYear = localStorage.getItem('vault-enroll-year-dd');
+    if (savedYear) enrollSel.value = savedYear;
+
+    // Curricula for this page
+    const semData = {
+      1: ALL_CURRICULA.find(c => c.key === 'NNDL-1'),
+      2: ALL_CURRICULA.find(c => c.key === 'NNDL-2'),
+    };
+
+    // ── AY helpers ──
+    function getEnrollYear() { return parseInt(enrollSel.value, 10); }
+    function computeAY(y) { return `${y}–${String(y + 1).slice(-2)}`; }
+
+    // ── Render a semester grid ──
+    function buildGrid(semNum) {
+      const grid = document.getElementById(`grid-sem${semNum}`);
+      const ayEl = document.getElementById(`ay-sem${semNum}`);
+      const cur  = semData[semNum];
+      const ay   = computeAY(getEnrollYear());
+
+      ayEl.textContent = `AY ${ay}`;
+
+      if (!cur) {
+        grid.innerHTML = '<p style="color:var(--muted);font-size:.85rem;padding:.5rem 0">Curriculum data coming soon.</p>';
+        return;
+      }
+
+      grid.innerHTML = cur.subjects.map((subj, si) => `
+        <div class="subject-card" id="sc-${semNum}-${si}" onclick="toggleCard(${semNum},${si})">
+          <div class="subj-name">${esc(subj.name)}</div>
+          <div class="subj-meta">
+            <span class="tag">${subj.code}</span>
+            <span class="tag cr">${subj.credits} cr</span>
+            ${subj.type.includes('lab') ? '<span class="tag lab">Lab</span>' : ''}
+          </div>
+          <div class="subj-units">${subj.units.length} units · click to expand</div>
+          <div class="unit-list">
+            ${subj.units.map((u, ui) => `
+              <div class="unit-item" onclick="pickUnit(event,${semNum},${si},${ui})">
+                <span style="color:var(--muted);margin-right:.4rem">${ui + 1}.</span>${esc(u.split('—')[0].trim())}
+              </div>`).join('')}
+          </div>
+        </div>`).join('') +
+        // Project placeholder card for sem2
+        (semNum === 2 ? `
+        <div class="subject-card placeholder">
+          <div class="subj-name">Project (Syllabus TBD)</div>
+          <div class="subj-meta"><span class="tag tbd">coming soon</span></div>
+          <div class="subj-units">Syllabus not yet provided</div>
+        </div>` : '');
+    }
+
+    function render() {
+      const ay = computeAY(getEnrollYear());
+      ayBadge.textContent = `AY ${ay}`;
+      localStorage.setItem('vault-enroll-year-dd', enrollSel.value);
+      buildGrid(1);
+      buildGrid(2);
+    }
+
+    // ── Card toggle ──
+    window.toggleCard = (semNum, si) => {
+      const card = document.getElementById(`sc-${semNum}-${si}`);
+      if (!card) return;
+      card.classList.toggle('expanded');
+    };
+
+    // ── Unit pick — sets context + shows apply bar ──
+    window.pickUnit = (e, semNum, si, ui) => {
+      e.stopPropagation();
+      const cur  = semData[semNum];
+      if (!cur) return;
+      const subj = cur.subjects[si];
+      const unit = subj.units[ui];
+      const subjectName = subj.name;
+
+      // Save context to localStorage (same keys as app.js Context)
+      localStorage.setItem('ctx-subject', subjectName);
+      localStorage.setItem('ctx-unit',    unit);
+      localStorage.setItem('ctx-topic',   '');
+
+      // Show apply bar
+      selSubj.textContent = subjectName.length > 40 ? subjectName.slice(0, 38) + '…' : subjectName;
+      selUnit.textContent = unit.length > 50 ? unit.slice(0, 48) + '…' : unit;
+      applyBar.classList.add('visible');
+
+      const qs = `?subject=${encodeURIComponent(subjectName)}&unit=${encodeURIComponent(unit)}`;
+      document.getElementById('goCore').href     = '../../index.html'     + qs;
+      document.getElementById('goMedia').href    = '../../media.html'     + qs;
+      document.getElementById('goPractice').href = '../../practice.html'  + qs;
+      document.getElementById('goDocs').href     = '../../documents.html' + qs;
+    };
+
+    // ── HTML escape ──
+    function esc(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    enrollSel.addEventListener('change', render);
+    render();
+  </script>
+  <script src="../../js/app.js"></script>
+</body>
+</html>

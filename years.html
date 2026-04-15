@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>All Years — VaultLM</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .hub-hero { padding:2.5rem 1.5rem 1.5rem; border-bottom:1px solid var(--border); }
+    .hub-hero h1 { font-size:1.75rem; font-weight:700; margin:0 0 .35rem; }
+    .hub-hero p  { color:var(--muted); font-size:.9rem; }
+
+    .batch-bar { display:flex; align-items:center; gap:.75rem; padding:1rem 1.5rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+    .batch-bar label { font-size:.85rem; color:var(--muted); }
+    .batch-bar select { padding:.35rem .6rem; border:1px solid var(--border); border-radius:6px; background:var(--surface); color:var(--text); font-size:.85rem; cursor:pointer; }
+
+    .program-section { padding:1.5rem; border-bottom:1px solid var(--border); }
+    .prog-title { font-size:1rem; font-weight:700; margin:0 0 1rem; }
+    .prog-badge { display:inline-block; margin-left:.5rem; font-size:.7rem; padding:.15rem .55rem; border-radius:20px; background:color-mix(in srgb,var(--accent) 12%,transparent); color:var(--accent); border:1px solid color-mix(in srgb,var(--accent) 25%,transparent); font-weight:600; vertical-align:middle; }
+
+    .years-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:.9rem; }
+    .year-card { border:1px solid var(--border); border-radius:12px; padding:1.1rem 1.2rem; background:var(--surface); text-decoration:none; color:var(--text); display:flex; flex-direction:column; gap:.4rem; transition:border-color .18s,box-shadow .18s; }
+    .year-card:hover { border-color:var(--accent); box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 15%,transparent); text-decoration:none; }
+    .year-card .yr-num { font-size:1.3rem; font-weight:800; color:var(--accent); }
+    .year-card .yr-sems { font-size:.8rem; color:var(--muted); }
+    .year-card .yr-ay { font-size:.78rem; background:color-mix(in srgb,var(--accent) 10%,transparent); color:var(--accent); border-radius:20px; padding:.2rem .6rem; align-self:flex-start; font-weight:600; margin-top:.25rem; }
+    .year-card .yr-count { font-size:.75rem; color:var(--muted); margin-top:auto; padding-top:.5rem; border-top:1px solid var(--border); }
+    .year-card.placeholder { opacity:.5; pointer-events:none; border-style:dashed; }
+    .year-card.placeholder .yr-num { color:var(--muted); }
+  </style>
+</head>
+<body>
+  <nav class="topnav">
+    <a class="brand" href="index.html">VaultLM</a>
+    <div class="nav-links">
+      <a href="index.html" data-page="index.html">Home</a>
+      <a href="media.html" data-page="media.html">Media</a>
+      <a href="documents.html" data-page="documents.html">Documents</a>
+      <a href="practice.html" data-page="practice.html">Practice</a>
+      <a href="visuals.html" data-page="visuals.html">Visuals</a>
+      <a href="subjects.html" data-page="subjects.html">Subjects</a>
+      <a href="community.html" data-page="community.html">Community</a>
+    </div>
+    <button id="hamburger" class="hamburger" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+  <div id="drawer-overlay" class="drawer-overlay"></div>
+  <aside id="drawer" class="drawer">
+    <div class="drawer-brand">VaultLM</div>
+    <nav class="drawer-nav">
+      <div class="drawer-section">Main</div>
+      <a href="index.html">🏠 Home</a>
+      <div class="drawer-section">Prompts</div>
+      <a href="media.html">🎙 Media</a>
+      <a href="documents.html">📄 Documents</a>
+      <a href="practice.html">🃏 Practice</a>
+      <a href="visuals.html">📊 Visuals</a>
+      <div class="drawer-section">Resources</div>
+      <a href="subjects.html">📚 Subjects</a>
+      <a href="community.html">🌐 Community</a>
+    </nav>
+  </aside>
+
+  <header class="hub-hero">
+    <h1>All Years</h1>
+    <p>Browse by year — context auto-fills every prompt page when you select a unit.</p>
+  </header>
+
+  <!-- Batch picker — shared across year pages via localStorage -->
+  <div class="batch-bar">
+    <label for="batch-select">My admission year:</label>
+    <select id="batch-select"></select>
+    <span style="font-size:.82rem;color:var(--muted)">→ Academic years update across all cards</span>
+  </div>
+
+  <!-- B.Tech section -->
+  <section class="program-section">
+    <p class="prog-title">B.Tech <span class="prog-badge">4 Years</span></p>
+    <div class="years-grid" id="btech-grid"></div>
+  </section>
+
+  <!-- Dual Degree section -->
+  <section class="program-section">
+    <p class="prog-title">Dual Degree — NNDL Diploma <span class="prog-badge">1 Year</span></p>
+    <div class="years-grid" id="diploma-grid"></div>
+  </section>
+
+  <script type="module">
+    // ── Curricula metadata (lightweight — no full subject data needed) ──
+    const BTECH_META = [
+      { year:1, sems:[1,2], courses:['CSE AI & Data Science','CSE AI & Machine Learning'], subjectCount:16, url:'years/btech/year1.html' },
+      { year:2, sems:[3,4], courses:['CSE AI & Data Science'],                              subjectCount:11, url:'years/btech/year2.html' },
+      { year:3, sems:[5,6], courses:['CSE Artificial Intelligence','CSE AI & ML'],          subjectCount:24, url:'years/btech/year3.html' },
+      { year:4, sems:[7,8], courses:[],                                                      subjectCount:0,  url:'years/btech/year4.html', placeholder:true },
+    ];
+    const DIPLOMA_META = [
+      { year:1, sems:[1,2], courses:["Diploma NNDL"], subjectCount:7, url:"years/dual-degree/year1.html" },
+    ];
+
+    let batchYear = parseInt(localStorage.getItem('vault-batch-year') || new Date().getFullYear());
+
+    const batchSel = document.getElementById('batch-select');
+    const cy = new Date().getFullYear();
+    for (let y = cy - 4; y <= cy + 2; y++) {
+      const opt = document.createElement('option');
+      opt.value = y; opt.textContent = y;
+      if (y === batchYear) opt.selected = true;
+      batchSel.appendChild(opt);
+    }
+
+    function ay(year, isBtech = true) {
+      // For btech: year 1 starts at batchYear
+      const start = batchYear + (year - 1);
+      return `AY ${start}–${String(start + 1).slice(-2)}`;
+    }
+
+    function buildCard(meta, isBtech) {
+      const cls = meta.placeholder ? 'year-card placeholder' : 'year-card';
+      const ayStr = ay(meta.year);
+      const semStr = meta.sems.length === 1
+        ? `Semester ${meta.sems[0]}`
+        : `Semesters ${meta.sems[0]} & ${meta.sems[1]}`;
+      const courseLine = meta.courses.length
+        ? meta.courses.map(c => `<span style="font-size:.72rem;color:var(--muted)">${c}</span>`).join('<br>')
+        : '<span style="font-size:.72rem;color:var(--muted)">Coming soon</span>';
+      const countLine = meta.subjectCount ? `${meta.subjectCount} subjects` : 'No data yet';
+
+      return `<a href="${meta.url}" class="${cls}">
+        <div class="yr-num">Year ${meta.year}</div>
+        <div class="yr-sems">${semStr}</div>
+        ${courseLine}
+        <span class="yr-ay">${ayStr}</span>
+        <div class="yr-count">${countLine}</div>
+      </a>`;
+    }
+
+    function render() {
+      document.getElementById('btech-grid').innerHTML   = BTECH_META.map(m => buildCard(m, true)).join('');
+      document.getElementById('diploma-grid').innerHTML = DIPLOMA_META.map(m => buildCard(m, false)).join('');
+    }
+
+    batchSel.addEventListener('change', () => {
+      batchYear = parseInt(batchSel.value);
+      localStorage.setItem('vault-batch-year', batchYear);
+      render();
+    });
+
+    render();
+  </script>
+  <script src="js/app.js"></script>
+</body>
+</html>

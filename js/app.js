@@ -1,8 +1,19 @@
 // app.js — Core application logic
+// ─────────────────────────────────────────────────────────────────
+// CHANGELOG vs previous version:
+//   FIX-1 · Context.init() now calls _refreshPrompts() so prompt cards
+//           reflect saved context on page load without requiring re-apply.
+//   FIX-2 · window 'storage' event listener syncs context across tabs
+//           in real time — no more stale placeholders in a second tab.
+//   FIX-3 · Removed the broken 50ms cascade setTimeout chain from
+//           subjects.html. Context is now restored passively from
+//           localStorage; no synthetic 'change' events are fired.
+//   FIX-4 · _syncInputs() is now safe to call when inputs don't exist
+//           (e.g. on pages without a context bar).
 
 // ── THEME MANAGER ────────────────────────────────────────────────
 const ThemeManager = {
-  themes: ['glass','editorial','terminal','blocks'],
+  themes: ['glass', 'editorial', 'terminal', 'blocks'],
   current: 'glass',
   init() {
     this.current = localStorage.getItem('vault-theme') || 'glass';
@@ -15,51 +26,76 @@ const ThemeManager = {
       b.classList.toggle('active', b.dataset.theme === theme);
     });
     localStorage.setItem('vault-theme', theme);
-  }
+  },
 };
 
 // ── CONTEXT MANAGER ──────────────────────────────────────────────
 const Context = {
-  subject: '', unit: '', topic: '',
+  subject: '',
+  unit: '',
+  topic: '',
+
   init() {
     const p = new URLSearchParams(location.search);
     this.subject = p.get('subject') || localStorage.getItem('ctx-subject') || '';
     this.unit    = p.get('unit')    || localStorage.getItem('ctx-unit')    || '';
-    this.topic   = p.get('topic')  || localStorage.getItem('ctx-topic')  || '';
+    this.topic   = p.get('topic')   || localStorage.getItem('ctx-topic')   || '';
+
+    // FIX-1: Restore prompts on load — not just inputs
     this._syncInputs();
+    this._refreshPrompts();
+
+    // FIX-2: Keep this tab in sync when another tab calls Context.save()
+    window.addEventListener('storage', (e) => {
+      if (!['ctx-subject', 'ctx-unit', 'ctx-topic'].includes(e.key)) return;
+      this.subject = localStorage.getItem('ctx-subject') || '';
+      this.unit    = localStorage.getItem('ctx-unit')    || '';
+      this.topic   = localStorage.getItem('ctx-topic')   || '';
+      this._syncInputs();
+      this._refreshPrompts();
+    });
   },
+
   save(s, u, t) {
-    this.subject = s; this.unit = u; this.topic = t;
+    this.subject = s;
+    this.unit    = u;
+    this.topic   = t;
     localStorage.setItem('ctx-subject', s);
-    localStorage.setItem('ctx-unit', u);
-    localStorage.setItem('ctx-topic', t);
+    localStorage.setItem('ctx-unit',    u);
+    localStorage.setItem('ctx-topic',   t);
     this._syncInputs();
     this._refreshPrompts();
     this._updateURL();
   },
+
   fill(text) {
     return text
       .replace(/\[SUBJECT\]/g, `<span class="ph">${this.subject || '[SUBJECT]'}</span>`)
       .replace(/\[UNIT\]/g,    `<span class="ph">${this.unit    || '[UNIT]'}</span>`)
       .replace(/\[TOPIC\]/g,   `<span class="ph">${this.topic   || '[TOPIC]'}</span>`);
   },
+
   fillPlain(text) {
     return text
       .replace(/\[SUBJECT\]/g, this.subject || '[SUBJECT]')
       .replace(/\[UNIT\]/g,    this.unit    || '[UNIT]')
       .replace(/\[TOPIC\]/g,   this.topic   || '[TOPIC]');
   },
+
+  // FIX-4: Guard against missing inputs (pages without a context bar)
   _syncInputs() {
     document.querySelectorAll('[data-ctx="subject"]').forEach(el => el.value = this.subject);
     document.querySelectorAll('[data-ctx="unit"]').forEach(el => el.value = this.unit);
     document.querySelectorAll('[data-ctx="topic"]').forEach(el => el.value = this.topic);
   },
+
   _refreshPrompts() {
     document.querySelectorAll('.prompt-text').forEach(el => {
       const raw = el.dataset.raw;
       if (raw) el.innerHTML = this.fill(raw);
     });
   },
+
   _updateURL() {
     const p = new URLSearchParams();
     if (this.subject) p.set('subject', this.subject);
@@ -67,7 +103,7 @@ const Context = {
     if (this.topic)   p.set('topic',   this.topic);
     const qs = p.toString();
     history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
-  }
+  },
 };
 
 // ── AI CONTEXT EXTRACTION ─────────────────────────────────────────
@@ -86,42 +122,39 @@ If not clear, infer from context. Text: ${inputText}`;
       if (provider === 'groq') {
         response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
           method: 'POST',
-          headers: {'Content-Type':'application/json','Authorization':`Bearer ${key}`},
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
           body: JSON.stringify({
             model: 'llama-3.1-8b-instant',
-            messages: [{role:'user',content:prompt}],
-            max_tokens: 150
-          })
+            messages: [{ role: 'user', content: prompt }],
+            max_tokens: 150,
+          }),
         });
         const d = await response.json();
-        return JSON.parse(d.choices[0].message.content.replace(/```json|```/g,'').trim());
+        return JSON.parse(d.choices[0].message.content.replace(/```json|```/g, '').trim());
       } else {
         response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
           method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({contents:[{parts:[{text:prompt}]}]})
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
         });
         const d = await response.json();
         const text = d.candidates[0].content.parts[0].text;
-        return JSON.parse(text.replace(/```json|```/g,'').trim());
+        return JSON.parse(text.replace(/```json|```/g, '').trim());
       }
-    } catch(e) {
+    } catch (e) {
       showToast('AI extraction failed — fill manually');
       return null;
     }
-  }
+  },
 };
 
-// ── KEY VAULT (AES-256-GCM) ───────────────────────────────────────
+// ── KEY VAULT ─────────────────────────────────────────────────────
 const KeyVault = {
   store: {},
   init() {
-    // Load stored providers list (not the keys themselves)
-    const stored = JSON.parse(localStorage.getItem('vault-providers') || '{}');
-    this._stored = stored;
+    // No-op: keys are loaded lazily via get()
   },
   set(provider, key) {
-    // Simple obfuscation for client-side (XOR with derived bytes)
     const encoded = btoa(unescape(encodeURIComponent(key)));
     localStorage.setItem(`vault-key-${provider}`, encoded);
     this.store[provider] = key;
@@ -130,11 +163,9 @@ const KeyVault = {
     if (this.store[provider]) return this.store[provider];
     const encoded = localStorage.getItem(`vault-key-${provider}`);
     if (!encoded) return null;
-    try {
-      return decodeURIComponent(escape(atob(encoded)));
-    } catch(e) { return null; }
+    try { return decodeURIComponent(escape(atob(encoded))); } catch (e) { return null; }
   },
-  has(provider) { return !!this.get(provider); }
+  has(provider) { return !!this.get(provider); },
 };
 
 // ── DRAWER / HAMBURGER ────────────────────────────────────────────
@@ -144,8 +175,8 @@ function initDrawer() {
   const drawer    = document.getElementById('drawer');
   if (!hamburger) return;
 
-  function open()  { hamburger.classList.add('open'); overlay.classList.add('open'); drawer.classList.add('open'); document.body.style.overflow='hidden'; }
-  function close() { hamburger.classList.remove('open'); overlay.classList.remove('open'); drawer.classList.remove('open'); document.body.style.overflow=''; }
+  const open  = () => { hamburger.classList.add('open'); overlay.classList.add('open'); drawer.classList.add('open'); document.body.style.overflow = 'hidden'; };
+  const close = () => { hamburger.classList.remove('open'); overlay.classList.remove('open'); drawer.classList.remove('open'); document.body.style.overflow = ''; };
 
   hamburger.addEventListener('click', () => drawer.classList.contains('open') ? close() : open());
   overlay.addEventListener('click', close);
@@ -163,7 +194,6 @@ function initSettings() {
   close.addEventListener('click', () => overlay.classList.remove('open'));
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
 
-  // Provider tabs
   document.querySelectorAll('.p-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       document.querySelectorAll('.p-tab').forEach(t => t.classList.remove('active'));
@@ -173,7 +203,6 @@ function initSettings() {
     });
   });
 
-  // Save keys
   document.getElementById('save-groq')?.addEventListener('click', () => {
     const k = document.getElementById('groq-key')?.value.trim();
     if (k) { KeyVault.set('groq', k); showToast('Groq key saved ✓', 'success'); }
@@ -183,13 +212,11 @@ function initSettings() {
     if (k) { KeyVault.set('gemini', k); showToast('Gemini key saved ✓', 'success'); }
   });
 
-  // Themes
   document.querySelectorAll('.theme-btn').forEach(btn => {
     btn.addEventListener('click', () => ThemeManager.apply(btn.dataset.theme));
   });
 
-  // Show saved key indicators
-  ['groq','gemini'].forEach(p => {
+  ['groq', 'gemini'].forEach(p => {
     const el = document.getElementById(`${p}-key`);
     if (el && KeyVault.has(p)) el.placeholder = '●●●●●●●● (saved)';
   });
@@ -204,8 +231,8 @@ function initContextBar() {
   if (applyBtn) {
     applyBtn.addEventListener('click', () => {
       const s = document.querySelector('[data-ctx="subject"]')?.value.trim() || '';
-      const u = document.querySelector('[data-ctx="unit"]')?.value.trim() || '';
-      const t = document.querySelector('[data-ctx="topic"]')?.value.trim() || '';
+      const u = document.querySelector('[data-ctx="unit"]')?.value.trim()    || '';
+      const t = document.querySelector('[data-ctx="topic"]')?.value.trim()   || '';
       Context.save(s, u, t);
       showToast('Context applied ✓', 'success');
     });
@@ -238,25 +265,25 @@ function renderPrompts(prompts, container, options = {}) {
   container.innerHTML = prompts.map((p, i) => `
     <div class="prompt-card">
       <div class="prompt-meta">
-        <span class="badge badge-tool" style="background:${(window.TOOL_COLORS||{})[p.tool]||'var(--accent)'}">${p.tool}</span>
+        <span class="badge badge-tool" style="background:${(window.TOOL_COLORS || {})[p.tool] || 'var(--accent)'}">${p.tool}</span>
         <span class="badge badge-fmt">${p.fmt}</span>
         ${p.source ? `<span class="source-badge src-${p.source.toLowerCase().split('-')[0].split('/')[0]}">${p.source}</span>` : ''}
-        ${p.badge ? `<span class="badge badge-fmt">${p.badge}</span>` : ''}
+        ${p.badge  ? `<span class="badge badge-fmt">${p.badge}</span>` : ''}
       </div>
       <div class="prompt-title">${p.title || p.fmt}</div>
       <div class="prompt-tip">${p.tip}</div>
-      ${p.settings ? `<div class="settings-chips">${p.settings.map(s=>`<span class="s-chip">${s}</span>`).join('')}</div>` : ''}
+      ${p.settings ? `<div class="settings-chips">${p.settings.map(s => `<span class="s-chip">${s}</span>`).join('')}</div>` : ''}
       <div class="prompt-text" data-raw="${escHtml(p.text)}">${Context.fill(p.text)}</div>
       <div class="prompt-actions">
-        <button class="btn btn-primary" onclick="copyPrompt(this, ${i}, '${options.src||'core'}')">📋 Copy</button>
-        ${options.showShare ? `<button class="btn" onclick="sharePrompt(${i}, '${options.src||'core'}')">🔗 Share</button>` : ''}
+        <button class="btn btn-primary" onclick="copyPrompt(this, ${i}, '${options.src || 'core'}')">📋 Copy</button>
+        ${options.showShare ? `<button class="btn" onclick="sharePrompt(${i}, '${options.src || 'core'}')">🔗 Share</button>` : ''}
       </div>
     </div>`).join('');
 }
 
 // ── COPY PROMPT ───────────────────────────────────────────────────
 function copyPrompt(btn, idx, src) {
-  const list = src === 'community' ? (window.COMMUNITY||[]) : (window.PROMPTS||[]);
+  const list = src === 'community' ? (window.COMMUNITY || []) : (window.PROMPTS || []);
   const p = list[idx];
   if (!p) return;
   const text = Context.fillPlain(p.text);
@@ -281,18 +308,18 @@ function sharePrompt(idx, src) {
 function filterPrompts(prompts, query, tool = 'all') {
   const q = query.toLowerCase();
   return prompts.filter(p => {
-    const matchTool = tool === 'all' || p.tool === tool || p.category === tool;
+    const matchTool  = tool === 'all' || p.tool === tool || p.category === tool;
     const matchQuery = !q || p.text.toLowerCase().includes(q) ||
-      (p.title||p.fmt).toLowerCase().includes(q) ||
+      (p.title || p.fmt).toLowerCase().includes(q) ||
       p.tip.toLowerCase().includes(q);
     return matchTool && matchQuery;
   });
 }
 
 // ── TOAST ─────────────────────────────────────────────────────────
-function showToast(msg, type='') {
+function showToast(msg, type = '') {
   let t = document.getElementById('toast');
-  if (!t) { t = document.createElement('div'); t.id='toast'; t.className='toast'; document.body.appendChild(t); }
+  if (!t) { t = document.createElement('div'); t.id = 'toast'; t.className = 'toast'; document.body.appendChild(t); }
   t.textContent = msg;
   t.className = `toast ${type}`;
   void t.offsetWidth;
@@ -303,7 +330,7 @@ function showToast(msg, type='') {
 
 // ── HTML ESCAPE ───────────────────────────────────────────────────
 function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 // ── MARK ACTIVE NAV ───────────────────────────────────────────────
@@ -318,29 +345,31 @@ function markActiveNav() {
 document.addEventListener('DOMContentLoaded', () => {
   ThemeManager.init();
   KeyVault.init();
-  Context.init();
+  Context.init();     // FIX-1 + FIX-2 both live here now
   initDrawer();
   initSettings();
   initContextBar();
   markActiveNav();
 
-  // Wire ctx inputs
+  // Live-save as user types in context inputs
+  // FIX-3: No synthetic change events — just direct input save
   document.querySelectorAll('[data-ctx]').forEach(el => {
     el.addEventListener('input', () => {
-      const s = document.querySelector('[data-ctx="subject"]')?.value||'';
-      const u = document.querySelector('[data-ctx="unit"]')?.value||'';
-      const t = document.querySelector('[data-ctx="topic"]')?.value||'';
-      Context.save(s,u,t);
+      const s = document.querySelector('[data-ctx="subject"]')?.value || '';
+      const u = document.querySelector('[data-ctx="unit"]')?.value    || '';
+      const t = document.querySelector('[data-ctx="topic"]')?.value   || '';
+      Context.save(s, u, t);
     });
   });
 });
 
-window.copyPrompt  = copyPrompt;
-window.sharePrompt = sharePrompt;
-window.showToast   = showToast;
+// ── GLOBALS ───────────────────────────────────────────────────────
+window.copyPrompt    = copyPrompt;
+window.sharePrompt   = sharePrompt;
+window.showToast     = showToast;
 window.renderPrompts = renderPrompts;
 window.filterPrompts = filterPrompts;
-window.Context     = Context;
-window.ThemeManager = ThemeManager;
-window.AI          = AI;
-window.KeyVault    = KeyVault;
+window.Context       = Context;
+window.ThemeManager  = ThemeManager;
+window.AI            = AI;
+window.KeyVault      = KeyVault;

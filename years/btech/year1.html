@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Year 1 — B.Tech · VaultLM</title>
+  <link rel="stylesheet" href="../../css/styles.css" />
+  <style>
+    /* ── Year page specific ── */
+    .yr-hero {
+      padding: 2.5rem 1.5rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .yr-breadcrumb {
+      font-size: .75rem;
+      color: var(--muted);
+      margin-bottom: .75rem;
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+    }
+    .yr-breadcrumb a { color: var(--accent); text-decoration: none; }
+    .yr-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin: 0 0 .3rem;
+    }
+    .yr-subtitle { color: var(--muted); font-size: .9rem; }
+
+    /* Batch picker */
+    .batch-bar {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .batch-bar label { font-size: .85rem; color: var(--muted); white-space: nowrap; }
+    .batch-bar select {
+      padding: .35rem .6rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--surface);
+      color: var(--text);
+      font-size: .85rem;
+      cursor: pointer;
+    }
+    .ay-display {
+      font-size: .85rem;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 20px;
+      padding: .25rem .75rem;
+      font-weight: 600;
+    }
+
+    /* Course tabs */
+    .course-tabs {
+      display: flex;
+      gap: .5rem;
+      padding: 1rem 1.5rem .5rem;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border);
+    }
+    .c-tab {
+      padding: .4rem .9rem;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-size: .82rem;
+      cursor: pointer;
+      transition: all .18s;
+    }
+    .c-tab.active, .c-tab:hover {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    /* Semester grid */
+    .sem-section {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .sem-header {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      margin-bottom: 1rem;
+    }
+    .sem-pill {
+      background: var(--accent);
+      color: #fff;
+      padding: .25rem .7rem;
+      border-radius: 20px;
+      font-size: .78rem;
+      font-weight: 700;
+    }
+    .sem-ay {
+      font-size: .8rem;
+      color: var(--muted);
+    }
+    .sem-branch {
+      font-size: .8rem;
+      color: var(--muted);
+      margin-left: auto;
+    }
+
+    /* Subject grid */
+    .subject-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: .75rem;
+    }
+    .subject-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: .9rem 1rem;
+      background: var(--surface);
+      cursor: pointer;
+      transition: border-color .18s, box-shadow .18s;
+    }
+    .subject-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 15%, transparent);
+    }
+    .subj-name {
+      font-weight: 600;
+      font-size: .9rem;
+      margin-bottom: .3rem;
+      line-height: 1.35;
+    }
+    .subj-meta {
+      display: flex;
+      gap: .4rem;
+      flex-wrap: wrap;
+      margin-bottom: .5rem;
+    }
+    .tag {
+      font-size: .7rem;
+      padding: .15rem .5rem;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .tag.cr { border-color: #6366f1; color: #6366f1; }
+    .tag.lab { border-color: #0ea5e9; color: #0ea5e9; }
+    .tag.math { border-color: #f59e0b; color: #f59e0b; }
+    .tag.soft { border-color: #10b981; color: #10b981; }
+    .subj-units {
+      font-size: .75rem;
+      color: var(--muted);
+    }
+
+    /* Unit dropdown (expands on card click) */
+    .unit-list {
+      display: none;
+      margin-top: .6rem;
+      border-top: 1px solid var(--border);
+      padding-top: .6rem;
+    }
+    .subject-card.expanded .unit-list { display: block; }
+    .unit-item {
+      font-size: .75rem;
+      padding: .3rem .4rem;
+      border-radius: 5px;
+      margin-bottom: .25rem;
+      cursor: pointer;
+      color: var(--text);
+      transition: background .15s;
+      line-height: 1.4;
+    }
+    .unit-item:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--accent); }
+
+    /* Apply banner */
+    .apply-bar {
+      display: none;
+      align-items: center;
+      gap: .75rem;
+      padding: .9rem 1.5rem;
+      background: color-mix(in srgb, var(--accent) 8%, transparent);
+      border-top: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
+      position: sticky;
+      bottom: 0;
+      flex-wrap: wrap;
+    }
+    .apply-bar.visible { display: flex; }
+    .apply-bar .sel-info { font-size: .85rem; flex: 1; }
+    .apply-bar .sel-info strong { color: var(--accent); }
+    .apply-links { display: flex; gap: .5rem; flex-wrap: wrap; }
+    .apply-links a {
+      padding: .4rem .85rem;
+      border-radius: 6px;
+      background: var(--accent);
+      color: #fff;
+      text-decoration: none;
+      font-size: .8rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .apply-links a:hover { opacity: .88; }
+
+    /* Empty state */
+    .yr-empty {
+      padding: 3rem 1.5rem;
+      text-align: center;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <!-- ── NAV ── -->
+  <nav class="topnav">
+    <a class="brand" href="../../index.html">VaultLM</a>
+    <div class="nav-links">
+      <a href="../../index.html" data-page="index.html">Home</a>
+      <a href="../../media.html" data-page="media.html">Media</a>
+      <a href="../../documents.html" data-page="documents.html">Documents</a>
+      <a href="../../practice.html" data-page="practice.html">Practice</a>
+      <a href="../../visuals.html" data-page="visuals.html">Visuals</a>
+      <a href="../../subjects.html" data-page="subjects.html">Subjects</a>
+      <a href="../../community.html" data-page="community.html">Community</a>
+    </div>
+    <button id="hamburger" class="hamburger" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+  <div id="drawer-overlay" class="drawer-overlay"></div>
+  <aside id="drawer" class="drawer">
+    <div class="drawer-brand">VaultLM</div>
+    <nav class="drawer-nav">
+      <div class="drawer-section">Main</div>
+      <a href="../../index.html" data-page="index.html">🏠 Home</a>
+      <div class="drawer-section">Prompts</div>
+      <a href="../../media.html" data-page="media.html">🎙 Media</a>
+      <a href="../../documents.html" data-page="documents.html">📄 Documents</a>
+      <a href="../../practice.html" data-page="practice.html">🃏 Practice</a>
+      <a href="../../visuals.html" data-page="visuals.html">📊 Visuals</a>
+      <div class="drawer-section">Resources</div>
+      <a href="../../subjects.html" data-page="subjects.html">📚 Subjects</a>
+      <a href="../../community.html" data-page="community.html">🌐 Community</a>
+    </nav>
+  </aside>
+
+  <!-- ── HERO ── -->
+  <header class="yr-hero">
+    <div class="yr-breadcrumb">
+      <a href="../../subjects.html">Subjects</a>
+      <span>›</span>
+      <span>B.Tech</span>
+      <span>›</span>
+      <span>Year 1</span>
+    </div>
+    <h1 class="yr-title">Year 1 — B.Tech</h1>
+    <p class="yr-subtitle">Semesters 1 &amp; 2 · Click any subject → unit to auto-fill context in all prompt pages</p>
+  </header>
+
+  <!-- ── BATCH PICKER ── -->
+  <div class="batch-bar">
+    <label for="batch-select">My admission year:</label>
+    <select id="batch-select">
+      <!-- populated by JS for ±5 years around current -->
+    </select>
+    <span class="ay-display" id="ay-label">AY —</span>
+  </div>
+
+  <!-- ── COURSE TABS ── -->
+  <div class="course-tabs" id="course-tabs">
+    <!-- populated by JS -->
+  </div>
+
+  <!-- ── SEMESTER SECTIONS ── -->
+  <main id="sem-container"></main>
+
+  <!-- ── APPLY BAR ── -->
+  <div class="apply-bar" id="apply-bar">
+    <div class="sel-info" id="sel-info">Select a unit to begin</div>
+    <div class="apply-links">
+      <a href="../../media.html">🎙 Media</a>
+      <a href="../../documents.html">📄 Documents</a>
+      <a href="../../practice.html">🃏 Practice</a>
+      <a href="../../visuals.html">📊 Visuals</a>
+    </div>
+  </div>
+
+  <!-- ── SCRIPTS ── -->
+  <script src="../../js/curricula/btech/aids-2.js" type="module"></script>
+  <script src="../../js/curricula/btech/aiml-2.js" type="module"></script>
+  <script type="module">
+    import { AIDS_2  } from '../../js/curricula/btech/aids-2.js';
+    import { AIML_2  } from '../../js/curricula/btech/aiml-2.js';
+    import { getAcademicYear } from '../../js/curricula/index.js';
+
+    // ── Config for this year page ──────────────────────────────
+    const PAGE_YEAR = 1;
+    // All curricula that belong to Year 1 of B.Tech
+    // sem 1 entries don't exist in our data yet (odd sems) so we list what we have
+    const CURRICULA_THIS_YEAR = [AIDS_2, AIML_2];
+    // Group by sem so we can render sem sections in order
+    const BY_SEM = {};
+    for (const c of CURRICULA_THIS_YEAR) {
+      if (!BY_SEM[c.sem]) BY_SEM[c.sem] = [];
+      BY_SEM[c.sem].push(c);
+    }
+
+    // ── State ─────────────────────────────────────────────────
+    let activeCourse = 'all';
+    let batchYear = parseInt(localStorage.getItem('vault-batch-year') || '2024');
+    let selectedSubject = '';
+    let selectedUnit = '';
+
+    // ── Batch select ──────────────────────────────────────────
+    const batchSel = document.getElementById('batch-select');
+    const ayLabel  = document.getElementById('ay-label');
+    const currentYear = new Date().getFullYear();
+    for (let y = currentYear - 4; y <= currentYear + 2; y++) {
+      const opt = document.createElement('option');
+      opt.value = y;
+      opt.textContent = y;
+      if (y === batchYear) opt.selected = true;
+      batchSel.appendChild(opt);
+    }
+    function updateAY() {
+      batchYear = parseInt(batchSel.value);
+      localStorage.setItem('vault-batch-year', batchYear);
+      // For Year 1: AY = batchYear – batchYear+1
+      const startYear = batchYear + (PAGE_YEAR - 1);
+      ayLabel.textContent = `AY ${startYear}–${String(startYear + 1).slice(-2)}`;
+      render();
+    }
+    batchSel.addEventListener('change', updateAY);
+    updateAY();
+
+    // ── Course tabs ───────────────────────────────────────────
+    const tabContainer = document.getElementById('course-tabs');
+    const courses = ['all', ...new Set(CURRICULA_THIS_YEAR.map(c => c.shortBranch))];
+    function buildTabs() {
+      tabContainer.innerHTML = courses.map(c => `
+        <button class="c-tab ${c === activeCourse ? 'active' : ''}" data-course="${c}">
+          ${c === 'all' ? 'All Courses' : c}
+        </button>`).join('');
+      tabContainer.querySelectorAll('.c-tab').forEach(btn => {
+        btn.addEventListener('click', () => {
+          activeCourse = btn.dataset.course;
+          buildTabs();
+          render();
+        });
+      });
+    }
+    buildTabs();
+
+    // ── Render semester sections ──────────────────────────────
+    function render() {
+      const container = document.getElementById('sem-container');
+      const sems = Object.keys(BY_SEM).sort((a, b) => a - b);
+      if (!sems.length) {
+        container.innerHTML = '<div class="yr-empty">No semesters found for this year.</div>';
+        return;
+      }
+
+      container.innerHTML = sems.map(sem => {
+        const curricula = BY_SEM[sem].filter(c =>
+          activeCourse === 'all' || c.shortBranch === activeCourse
+        );
+        if (!curricula.length) return '';
+
+        return curricula.map(c => {
+          const startYear = batchYear + (PAGE_YEAR - 1);
+          const ayStr = `AY ${startYear}–${String(startYear + 1).slice(-2)}`;
+          return `
+          <section class="sem-section" data-key="${c.key}">
+            <div class="sem-header">
+              <span class="sem-pill">Sem ${c.sem}</span>
+              <span class="sem-ay">${ayStr}</span>
+              <span class="sem-branch">${c.shortBranch}</span>
+            </div>
+            <div class="subject-grid">
+              ${c.subjects.map((s, si) => `
+                <div class="subject-card" id="card-${c.key}-${si}" onclick="toggleCard('${c.key}', ${si})">
+                  <div class="subj-name">${s.name}</div>
+                  <div class="subj-meta">
+                    <span class="tag cr">${s.credits} cr</span>
+                    <span class="tag ${s.type.includes('lab') ? 'lab' : s.type === 'math' ? 'math' : s.type === 'soft' ? 'soft' : ''}">${s.type}</span>
+                    <span class="tag">${s.code}</span>
+                  </div>
+                  <div class="subj-units">${s.units.length} units</div>
+                  <div class="unit-list" id="units-${c.key}-${si}">
+                    ${s.units.map((u, ui) => `
+                      <div class="unit-item" onclick="selectUnit(event, '${escJs(s.name)}', '${escJs(u)}')">
+                        ${ui + 1}. ${u}
+                      </div>`).join('')}
+                  </div>
+                </div>`).join('')}
+            </div>
+          </section>`;
+        }).join('');
+      }).join('');
+    }
+
+    // ── Card expand/collapse ──────────────────────────────────
+    window.toggleCard = function(key, idx) {
+      const card = document.getElementById(`card-${key}-${idx}`);
+      card.classList.toggle('expanded');
+    };
+
+    // ── Unit select → context ─────────────────────────────────
+    window.selectUnit = function(e, subjectName, unitText) {
+      e.stopPropagation();
+      selectedSubject = subjectName;
+      selectedUnit = unitText.split(' — ')[0]; // use the short label before em-dash
+
+      // Persist to localStorage so other pages pick it up
+      localStorage.setItem('ctx-subject', selectedSubject);
+      localStorage.setItem('ctx-unit',    selectedUnit);
+      localStorage.setItem('ctx-topic',   '');
+
+      // Show apply bar
+      const bar  = document.getElementById('apply-bar');
+      const info = document.getElementById('sel-info');
+      bar.classList.add('visible');
+      info.innerHTML = `<strong>${selectedSubject}</strong> · ${selectedUnit.slice(0, 60)}${selectedUnit.length > 60 ? '…' : ''}`;
+
+      // Highlight selected
+      document.querySelectorAll('.unit-item').forEach(el => el.style.fontWeight = '');
+      e.currentTarget.style.fontWeight = '700';
+    };
+
+    function escJs(s) {
+      return s.replace(/'/g, "\\'").replace(/"/g, '\\"');
+    }
+  </script>
+  <script src="../../js/app.js"></script>
+</body>
+</html>
